@@ -1,5 +1,5 @@
-import { LoginUserDto } from './dto/loginuser.dto';
-import { CreateUserDto } from './dto/createuser.dto';
+import { signInDto } from './dto/signInDto.dto';
+import { signUpDto } from './dto/signUpDto.dto';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entitys/user.entity';
@@ -16,27 +16,27 @@ export class AuthService {
   ) {}
 
   //Login do usuario
-  async signIn(LoginUserDto: LoginUserDto) {
+  async signIn(data: signInDto) {
     //Verificar se o usuario existe no banco de dados
     const user = await this.userRepository.findOne({
       where: {
-        email: LoginUserDto.email,
+        email: data.email,
       },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Usuário não encontrado');
+      throw new UnauthorizedException('Credenciais inválidas');
     }
 
     //Verifica a senha do usuario
-    const isMastch = await bcrypt.compare(LoginUserDto.password, user.password);
+    const isMastch = await bcrypt.compare(data.password, user.password);
 
     if (!isMastch) {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     //Retorna o token de acesso do usuario
-    const payload = { sub: user.idUser, email: user.email };
+    const payload = { sub: user.idUser, role: user.role };
     const token = await this.JWtService.signAsync(payload);
     return {
       access_token: token,
@@ -44,11 +44,11 @@ export class AuthService {
   }
 
   //Registrar um novo usuario
-  async signUp(userDto: CreateUserDto): Promise<CreateUserDto> {
+  async signUp(data: signUpDto): Promise<signUpDto> {
     //Verificar se o usuario ja existe
     const findUser = await this.userRepository.findOne({
       where: {
-        email: userDto.email,
+        email: data.email,
       },
     });
 
@@ -56,17 +56,17 @@ export class AuthService {
       throw new UnauthorizedException('Credencias inválidas');
     }
     //Criptografia da senha do usuario
-    const hashPassword = await bcrypt.hash(userDto.password, 10);
+    const hashPassword = await bcrypt.hash(data.password, 10);
     //Converte signUpDto para entidade User
     const user = new User();
-    user.name = userDto.name;
-    user.email = userDto.email;
+    user.name = data.name;
+    user.email = data.email;
     user.password = hashPassword;
-    user.role = userDto.role;
+    user.role = data.role;
     //Salva novo usuario no banco de dados com a senha criptografada
     const newUser = await this.userRepository.save(user);
     //Converte entidade User para SignUpDto
-    const newUserDto = new CreateUserDto();
+    const newUserDto = new signUpDto();
     newUserDto.name = newUser.name;
     newUserDto.email = newUser.email;
     newUserDto.role = newUser.role;

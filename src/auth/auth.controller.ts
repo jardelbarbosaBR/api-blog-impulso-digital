@@ -1,22 +1,28 @@
-import { Body, Controller, Get, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post, UseGuards } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
-import { CreateUserDto } from './dto/createuser.dto';
+import { signUpDto } from './dto/signUpDto.dto';
+import { signInDto } from './dto/signInDto.dto';
+import { AuthGuard } from './auth.guard';
 
-import { LoginUserDto } from './dto/loginuser.dto';
+import { Role } from 'src/enums/role.enum';
+import { Roles } from './roles/roles.decorator';
+import { RolesGuard } from './roles.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  signIn(@Body() LoginUserDto: LoginUserDto) {
-    return this.authService.signIn(LoginUserDto);
+  signIn(@Body() signInDto: signInDto) {
+    return this.authService.signIn(signInDto);
   }
 
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Post('registro')
-  async signUp(@Body() userDto: CreateUserDto) {
-    const newUserDto = await this.authService.signUp(userDto);
+  async signUp(@Body() signUpDto: signUpDto) {
+    const newUserDto = await this.authService.signUp(signUpDto);
     return {
       mensagem: 'Usuário cadastrado com sucesso',
       status: HttpStatus.CREATED,

@@ -1,4 +1,4 @@
-import { UserRole } from 'src/enums/role.enum';
+import { Role } from 'src/enums/role.enum';
 import {
   Column,
   CreateDateColumn,
@@ -20,9 +20,9 @@ export class User {
   password: string;
   @Column({
     type: 'enum',
-    enum: UserRole,
+    enum: Role,
   })
-  role: UserRole;
+  role: Role;
   @CreateDateColumn()
   createAt: Timestamp;
   @UpdateDateColumn()
