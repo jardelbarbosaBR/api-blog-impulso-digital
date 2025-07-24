@@ -11,7 +11,7 @@ import {
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  idUser: number;
+  idUser: string;
   @Column({ name: 'name' })
   name: string;
   @Column({ name: 'email', unique: true })
