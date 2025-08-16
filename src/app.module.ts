@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { RolesGuard } from './auth/roles.guard';
+import { ArticleModule } from './article/article.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { RolesGuard } from './auth/roles.guard';
       synchronize: true,
     }),
     AuthModule,
+    ArticleModule,
   ],
   controllers: [],
   providers: [],
