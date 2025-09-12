@@ -28,18 +28,24 @@ export class ArticleController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.EDITOR)
   @Post()
-  create(@Body() createArticleDto: CreateArticleDto, @Request() req: Request) {
-    return this.articleService.create(createArticleDto, req);
+  createArticles(
+    @Body() createArticleDto: CreateArticleDto,
+    @Request() req: Request,
+  ) {
+    return this.articleService.criarNovoArtico(createArticleDto, req);
   }
 
   @Get()
-  async findAll(@Query('page') page: string, @Query('limit') limit: string) {
-    return await this.articleService.findAll(page, limit);
+  async paginationArticles(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+  ) {
+    return await this.articleService.buscarTodosOsArticoPorPagina(page, limit);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.articleService.findOne(+id);
+  @Get('meus-rascunhos')
+  findOne() {
+    return this.articleService.meuRascunhos();
   }
 
   @Patch(':id')

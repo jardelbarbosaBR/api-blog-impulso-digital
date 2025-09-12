@@ -15,7 +15,7 @@ export class ArticleService {
   ) {}
 
   //Criar um novo artico
-  async create(createArticleDto: CreateArticleDto, req: Request) {
+  async criarNovoArtico(createArticleDto: CreateArticleDto, req: Request) {
     const authorId = req['user'];
 
     const article = new Article();
@@ -36,21 +36,57 @@ export class ArticleService {
   }
 
   //Buscar todos os articos por paginação
-  async findAll(page, limit) {
-    const articles = await this.articleRepository.find({
+  async buscarTodosOsArticoPorPagina(page, limit) {
+    const [articles, total] = await this.articleRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
-      relations: ['author'],
+      order: {
+        createAt: 'ASC',
+      },
+      relations: {
+        author: true,
+      },
       where: {
-        status: Status.DRAFT,
+        status: Status.PUBLISHED,
+      },
+      select: {
+        idArticle: true,
+        title: true,
+        content: true,
+        author: {
+          idUser: true,
+          name: true,
+        },
+        status: true,
+        createAt: true,
+        updateAt: true,
       },
     });
 
-    return articles;
+    const articlesPaginados: ArticeResponseDto[] = [];
+
+    articles.forEach((article) => {
+      const articlePaginado: ArticeResponseDto = {
+        title: article.title,
+        content: article.content,
+        author: article.author.name,
+        status: article.status,
+        createAt: article.createAt,
+        updateAt: article.updateAt,
+      };
+      articlesPaginados.push(articlePaginado);
+    });
+
+    return {
+      data: articlesPaginados,
+      total,
+      page,
+      totalPage: Math.ceil(total / limit),
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} article`;
+  meuRascunhos() {
+    return `This action returns all article`;
   }
 
   update(id: number, updateArticleDto: UpdateArticleDto) {
