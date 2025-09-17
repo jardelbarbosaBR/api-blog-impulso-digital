@@ -37,9 +37,12 @@ export class ArticleService {
 
   //Buscar todos os articos por paginação
   async buscarTodosOsArticoPorPagina(page, limit) {
+    const pageNumber = parseInt(page, 10) || 1;
+    const limitNumber = parseInt(limit, 10) || 10;
+
     const [articles, total] = await this.articleRepository.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (pageNumber - 1) * limitNumber,
+      take: limitNumber,
       order: {
         createAt: 'ASC',
       },
@@ -63,30 +66,77 @@ export class ArticleService {
       },
     });
 
-    const articlesPaginados: ArticeResponseDto[] = [];
-
-    articles.forEach((article) => {
-      const articlePaginado: ArticeResponseDto = {
+    const articosPublicosPaginados: ArticeResponseDto[] = articles.map(
+      (article) => ({
         title: article.title,
         content: article.content,
         author: article.author.name,
         status: article.status,
         createAt: article.createAt,
         updateAt: article.updateAt,
-      };
-      articlesPaginados.push(articlePaginado);
-    });
+      }),
+    );
 
     return {
-      data: articlesPaginados,
+      data: articosPublicosPaginados,
       total,
       page,
       totalPage: Math.ceil(total / limit),
     };
   }
 
-  meuRascunhos() {
-    return `This action returns all article`;
+  async buscarTodosMeusRascunhos(page: string, limit: string, req: any) {
+    const userId = req['user'];
+    console.log(req);
+    const pageNumber = parseInt(page, 10) || 1;
+    const limitNumber = parseInt(limit, 10) || 10;
+
+    const [articles, total] = await this.articleRepository.findAndCount({
+      skip: (pageNumber - 1) * limitNumber,
+      take: limitNumber,
+      where: {
+        author: {
+          idUser: userId.sub,
+        },
+        status: Status.DRAFT,
+      },
+      relations: {
+        author: true,
+      },
+      order: {
+        createAt: 'ASC',
+      },
+      select: {
+        idArticle: true,
+        title: true,
+        content: true,
+        author: {
+          idUser: true,
+          name: true,
+        },
+        status: true,
+        createAt: true,
+        updateAt: true,
+      },
+    });
+
+    const meusRascunhosPaginados: ArticeResponseDto[] = articles.map(
+      (article) => ({
+        title: article.title,
+        content: article.content,
+        author: article.author.name,
+        status: article.status,
+        createAt: article.createAt,
+        updateAt: article.updateAt,
+      }),
+    );
+
+    return {
+      data: meusRascunhosPaginados,
+      total,
+      page: pageNumber,
+      totalPage: Math.ceil(total / limitNumber),
+    };
   }
 
   update(id: number, updateArticleDto: UpdateArticleDto) {

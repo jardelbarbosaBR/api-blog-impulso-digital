@@ -43,9 +43,15 @@ export class ArticleController {
     return await this.articleService.buscarTodosOsArticoPorPagina(page, limit);
   }
 
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.EDITOR)
   @Get('meus-rascunhos')
-  findOne() {
-    return this.articleService.meuRascunhos();
+  async buscarTodosMeusRascunhosPorPagina(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    @Request() req: Request,
+  ) {
+    return await this.articleService.buscarTodosMeusRascunhos(page, limit, req);
   }
 
   @Patch(':id')
