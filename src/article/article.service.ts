@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +6,7 @@ import { Article } from 'src/entitys/article.entity';
 import { Repository } from 'typeorm';
 import { Status } from 'src/enums/status.enum';
 import { ArticeResponseDto } from './dto/article-response.dto';
+import { Console } from 'console';
 
 @Injectable()
 export class ArticleService {
@@ -68,6 +69,7 @@ export class ArticleService {
 
     const articosPublicosPaginados: ArticeResponseDto[] = articles.map(
       (article) => ({
+        id: article.idArticle,
         title: article.title,
         content: article.content,
         author: article.author.name,
@@ -85,9 +87,9 @@ export class ArticleService {
     };
   }
 
+  // Buscar todos os meus rascunhos de artigos
   async buscarTodosMeusRascunhos(page: string, limit: string, req: any) {
     const userId = req['user'];
-    console.log(req);
     const pageNumber = parseInt(page, 10) || 1;
     const limitNumber = parseInt(limit, 10) || 10;
 
@@ -122,6 +124,7 @@ export class ArticleService {
 
     const meusRascunhosPaginados: ArticeResponseDto[] = articles.map(
       (article) => ({
+        id: article.idArticle,
         title: article.title,
         content: article.content,
         author: article.author.name,
@@ -137,6 +140,44 @@ export class ArticleService {
       page: pageNumber,
       totalPage: Math.ceil(total / limitNumber),
     };
+  }
+
+  async buscarArtigoPorId(id: string, user: Request) {
+    const article = await this.articleRepository.findOne({
+      where: {
+        idArticle: id,
+      },
+      relations: {
+        author: true,
+      },
+      select: {
+        idArticle: true,
+        title: true,
+        content: true,
+        author: {
+          idUser: true,
+          name: true,
+        },
+        status: true,
+        createAt: true,
+        updateAt: true,
+      },
+    });
+
+    if (!article) {
+      throw new NotFoundException('Artigo não encontrado');
+    }
+
+    if (article.status === Status.DRAFT) {
+      const userId = user['user'];
+      if (article.author.idUser !== userId.sub) {
+        throw new NotFoundException('Artigo não encontrado');
+      }
+    }
+
+    if (article.status !== Status.PUBLISHED) {
+      return article;
+    }
   }
 
   update(id: number, updateArticleDto: UpdateArticleDto) {
